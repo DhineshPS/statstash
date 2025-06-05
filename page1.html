@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StatStash - Game Stats Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6c5ce7;
+      --secondary: #a29bfe;
+      --accent: #fd79a8;
+      --light: #f8f9fa;
+      --dark: #2d3436;
+      --success: #00b894;
+      --warning: #fdcb6e;
+      --danger: #d63031;
+    }
+    
+    * {
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 20px;
+      min-height: 100vh;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      color: var(--dark);
+      margin-bottom: 30px;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+      display: inline-block;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 2px;
+      transform: scaleX(0);
+      transform-origin: right;
+      animation: titleUnderline 1.5s ease forwards;
+    }
+    
+    @keyframes titleUnderline {
+      to {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+    }
+    
+    form, .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    input, select, button {
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+    }
+    
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    button:hover {
+      background-color: var(--secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    #gameList {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+    }
+    
+    .game {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      animation: slideUp 0.5s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .game::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5px;
+      height: 100%;
+    }
+    
+    .game[data-status="Playing"]::before {
+      background: var(--primary);
+    }
+    
+    .game[data-status="Completed"]::before {
+      background: var(--success);
+    }
+    
+    .game[data-status="Dropped"]::before {
+      background: var(--danger);
+    }
+    
+    .game strong {
+      color: var(--dark);
+      font-size: 18px;
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    .game span {
+      display: inline-block;
+      margin-right: 15px;
+      margin-bottom: 10px;
+      color: var(--dark);
+      font-size: 14px;
+    }
+    
+    .game .status {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .game[data-status="Playing"] .status {
+      background: rgba(108, 92, 231, 0.1);
+      color: var(--primary);
+    }
+    
+    .game[data-status="Completed"] .status {
+      background: rgba(0, 184, 148, 0.1);
+      color: var(--success);
+    }
+    
+    .game[data-status="Dropped"] .status {
+      background: rgba(214, 48, 49, 0.1);
+      color: var(--danger);
+    }
+    
+    .game .feedback {
+      color: #666;
+      font-size: 14px;
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .actions button {
+      flex: 1;
+      padding: 8px;
+      font-size: 12px;
+    }
+    
+    .actions button:first-child {
+      background: var(--warning);
+    }
+    
+    .actions button:last-child {
+      background: var(--danger);
+    }
+    
+    .filters label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: var(--dark);
+    }
+    
+    .playtime {
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      grid-column: 1 / -1;
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .empty-state img {
+      width: 100px;
+      opacity: 0.7;
+      margin-bottom: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      form, .filters {
+        flex-direction: column;
+      }
+      
+      input, select, button {
+        width: 100%;
+      }
+      
+      #gameList {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>StatStash - Game Stats Tracker</h1>
+
+  <form id="gameForm">
+    <input type="text" id="gameName" placeholder="Game Name" required />
+    <input type="number" id="playTime" placeholder="Playtime (hrs)" min="0" step="0.1" required />
+    <select id="gameStatus">
+      <option value="Playing">Playing</option>
+      <option value="Completed">Completed</option>
+      <option value="Dropped">Dropped</option>
+    </select>
+    <input type="text" id="feedback" placeholder="Feedback (optional)" />
+    <button type="submit">Add Game</button>
+  </form>
+
+  <div class="filters">
+    <label>Filter:
+      <select id="statusFilter">
+        <option value="All">All</option>
+        <option value="Playing">Playing</option>
+        <option value="Completed">Completed</option>
+        <option value="Dropped">Dropped</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="gameList"></div>
+
+  <script>
+    const gameForm = document.getElementById('gameForm');
+    const gameList = document.getElementById('gameList');
+    const statusFilter = document.getElementById('statusFilter');
+
+    let games = JSON.parse(localStorage.getItem('games')) || [];
+
+    function saveGames() {
+      localStorage.setItem('games', JSON.stringify(games));
+    }
+
+    function renderGames() {
+      gameList.innerHTML = '';
+      const filter = statusFilter.value;
+      const filteredGames = filter === 'All' ? games : games.filter(game => game.status === filter);
+
+      if (filteredGames.length === 0) {
+        gameList.innerHTML = `
+          <div class="empty-state">
+            <img src="https://cdn-icons-png.flaticon.com/512/7486/7486747.png" alt="No games">
+            <h3>No games found</h3>
+            <p>Add your first game to get started!</p>
+          </div>
+        `;
+        return;
+      }
+
+      filteredGames.forEach((game, index) => {
+        const gameDiv = document.createElement('div');
+        gameDiv.className = 'game';
+        gameDiv.setAttribute('data-status', game.status);
+        gameDiv.innerHTML = `
+          <strong>${game.name}</strong>
+          <span class="playtime">⏱️ ${game.playtime} hrs</span>
+          <span class="status">${game.status}</span>
+          <div class="feedback">${game.feedback || 'No feedback provided'}</div>
+          <div class="actions">
+            <button onclick="editGame(${index})">✏️ Edit</button>
+            <button onclick="deleteGame(${index})">🗑️ Delete</button>
+          </div>
+        `;
+        gameList.appendChild(gameDiv);
+      });
+    }
+
+    function editGame(index) {
+      const game = games[index];
+      document.getElementById('gameName').value = game.name;
+      document.getElementById('playTime').value = game.playtime;
+      document.getElementById('gameStatus').value = game.status;
+      document.getElementById('feedback').value = game.feedback || '';
+      deleteGame(index);
+      
+      document.getElementById('gameForm').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('gameName').focus();
+    }
+
+    function deleteGame(index) {
+      const gameElements = document.querySelectorAll('.game');
+      if (gameElements[index]) {
+        gameElements[index].style.transform = 'translateX(-100%)';
+        gameElements[index].style.opacity = '0';
+        
+        setTimeout(() => {
+          games.splice(index, 1);
+          saveGames();
+          renderGames();
+        }, 300);
+      }
+    }
+
+    gameForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const newGame = {
+        name: document.getElementById('gameName').value,
+        playtime: parseFloat(document.getElementById('playTime').value).toFixed(1),
+        status: document.getElementById('gameStatus').value,
+        feedback: document.getElementById('feedback').value
+      };
+      games.push(newGame);
+      saveGames();
+      gameForm.reset();
+      renderGames();
+      
+      const submitBtn = gameForm.querySelector('button[type="submit"]');
+      submitBtn.textContent = '✓ Added!';
+      submitBtn.style.backgroundColor = 'var(--success)';
+      setTimeout(() => {
+        submitBtn.textContent = 'Add Game';
+        submitBtn.style.backgroundColor = 'var(--primary)';
+      }, 1500);
+    });
+
+    statusFilter.addEventListener('change', renderGames);
+
+    renderGames();
+    
+    setTimeout(() => {
+      document.body.style.background = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
+    }, 100);
+  </script>
+</body>
+</html>

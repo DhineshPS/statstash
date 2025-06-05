@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StatStash - Game Stats Tracker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+      animation: fadeIn 1s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+    }
+
+    form, .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    input, select, button {
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    input, select {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+    }
+
+    button {
+      background-color: #00c9a7;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #00a68a;
+    }
+
+    .game {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      animation: slideIn 0.4s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .game span {
+      display: inline-block;
+      width: 150px;
+      font-weight: bold;
+    }
+
+    .actions button {
+      background-color: #ff5e57;
+      margin-top: 10px;
+      margin-right: 5px;
+    }
+
+    .actions button:hover {
+      background-color: #e94e47;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 StatStash - Game Tracker</h1>
+
+  <form id="gameForm">
+    <input type="text" id="gameName" placeholder="Game Name" required />
+    <input type="number" id="playTime" placeholder="Playtime (hrs)" required />
+    <select id="gameStatus">
+      <option value="Playing">Playing</option>
+      <option value="Completed">Completed</option>
+      <option value="Dropped">Dropped</option>
+    </select>
+    <input type="text" id="feedback" placeholder="Feedback (optional)" />
+    <button type="submit">Add Game</button>
+  </form>
+
+  <div class="filters">
+    <label>Filter:
+      <select id="statusFilter">
+        <option value="All">All</option>
+        <option value="Playing">Playing</option>
+        <option value="Completed">Completed</option>
+        <option value="Dropped">Dropped</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="gameList"></div>
+
+  <script>
+    const gameForm = document.getElementById('gameForm');
+    const gameList = document.getElementById('gameList');
+    const statusFilter = document.getElementById('statusFilter');
+
+    let games = JSON.parse(localStorage.getItem('games')) || [];
+
+    function saveGames() {
+      localStorage.setItem('games', JSON.stringify(games));
+    }
+
+    function renderGames() {
+      gameList.innerHTML = '';
+      const filter = statusFilter.value;
+      const filteredGames = filter === 'All' ? games : games.filter(game => game.status === filter);
+
+      filteredGames.forEach((game, index) => {
+        const gameDiv = document.createElement('div');
+        gameDiv.className = 'game';
+        gameDiv.innerHTML = `
+          <span><strong>${game.name}</strong></span>
+          <span>${game.playtime} hrs</span><br>
+          <span>Status: ${game.status}</span><br>
+          <div>Feedback: ${game.feedback || 'N/A'}</div>
+          <div class="actions">
+            <button onclick="editGame(${index})">Edit</button>
+            <button onclick="deleteGame(${index})">Delete</button>
+          </div>
+        `;
+        gameList.appendChild(gameDiv);
+      });
+    }
+
+    function editGame(index) {
+      const game = games[index];
+      document.getElementById('gameName').value = game.name;
+      document.getElementById('playTime').value = game.playtime;
+      document.getElementById('gameStatus').value = game.status;
+      document.getElementById('feedback').value = game.feedback;
+      deleteGame(index);
+    }
+
+    function deleteGame(index) {
+      games.splice(index, 1);
+      saveGames();
+      renderGames();
+    }
+
+    gameForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const newGame = {
+        name: document.getElementById('gameName').value,
+        playtime: document.getElementById('playTime').value,
+        status: document.getElementById('gameStatus').value,
+        feedback: document.getElementById('feedback').value
+      };
+      games.push(newGame);
+      saveGames();
+      gameForm.reset();
+      renderGames();
+    });
+
+    statusFilter.addEventListener('change', renderGames);
+
+    renderGames();
+  </script>
+</body>
+</html>
